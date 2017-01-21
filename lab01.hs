@@ -215,7 +215,12 @@ sumDigits d =(d `mod` 10) + sumDigits (d `div` 10)
 in a number. Accordingly |reverseDigits 12345| is |54321|.
 -}
 reverseDigits:: Int -> Int
-reverseDigits dig = drop fromIntegral(length (show dig)) dig
+reverseDigits 0 = 0
+--reverseDigits dig = drop fromIntegral(length (show dig)) dig
+reverseDigits dig = dig `mod` 10 * 10^place + reverseDigits(dig `div` 10)
+    where 
+        --dig' = fromIntegral dig
+        place = (floor . logBase 10) (fromIntegral dig)
 
 -- Sometimes, a function isn't quite defined correctly to be recursive.
 -- That is, a particular operation cannot be expressed in terms of the
