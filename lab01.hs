@@ -1,8 +1,9 @@
 -- Lab01.hs
 -- CS 380
 -- Spring 2017
-
 module Lab01 where
+import Data.List
+
 
 -- This file should compile as-is in GHCi. Test this by loading it into GHCi:
 -- navigate to the directory containing this file and run
@@ -158,9 +159,13 @@ like: countDown 0 = 0
 countDown x = ...
 is more of a pattern matching thing
 -}
-countDown:: Int -> String
+helper:: Integer -> Integer -> Integer
+--helper 0 acc = acc
+helper n acc = helper (n-1) (acc + n)
+countDown:: Integer -> String
 countDown 0 = "too low"
-countDown s = show s ++ " " ++ countDown (s-1)
+countDown s = show (helper s 0)
+--countDown s = show s ++ " " ++ countDown (s-1)
 
 {-
 11. Write a function |countUp| that goes the opposite way of |countDown|.
@@ -219,8 +224,7 @@ reverseDigits 0 = 0
 --reverseDigits dig = drop fromIntegral(length (show dig)) dig
 reverseDigits dig = dig `mod` 10 * 10^place + reverseDigits(dig `div` 10)
     where 
-        --dig' = fromIntegral dig
-        place = (floor . logBase 10) (fromIntegral dig)
+        place = (floor . logBase 10) (fromIntegral dig) --logbase 
 
 -- Sometimes, a function isn't quite defined correctly to be recursive.
 -- That is, a particular operation cannot be expressed in terms of the
@@ -235,21 +239,25 @@ reverseDigits dig = dig `mod` 10 * 10^place + reverseDigits(dig `div` 10)
 in the hailstone sequence. See https://en.wikipedia.org/wiki/Collatz_conjecture
 Examples: |hailstoneStep 5| = 16; |hailstoneStep 8| = 4.
 -}
-checkOdd:: Int -> Bool
-checkOdd i = i `mod` 2 == 1
 
 hailstoneStep:: Int -> Int
-hailstoneStep p = if checkOdd p
-    then p * 2
-    else p*3 + 1
+hailstoneStep p = if odd p
+    then p*3 + 1
+    else p `div` 2
+
+collatzList:: Int -> [Int]
+collatzList p2 | p2 <= 0 = error "must be pos"
+    | p2 == 1 = [1]
+    | otherwise = p2 : collatzList (hailstoneStep p2)
 
 {-
 17b. Write a function |collatz| that evaluates the length of the hailstone
 sequence starting at the given number.
 Examples: |collatz 1| = 1; |collatz 4| = 3; |collatz 12| = 10.
 -}
---collatz:: Int -> Int
---collatz c = hailstoneStep c 
+collatz:: Int -> Int
+collatz c = length (collatzList c)
+
 
 
 -- The Collatz Conjecture asks whether |collatz| terminates for all possible
