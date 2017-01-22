@@ -3,6 +3,7 @@
 -- Spring 2017
 module Lab01 where
 import Data.List
+import System.Exit
 
 
 -- This file should compile as-is in GHCi. Test this by loading it into GHCi:
@@ -159,13 +160,12 @@ like: countDown 0 = 0
 countDown x = ...
 is more of a pattern matching thing
 -}
-helper:: Integer -> Integer -> Integer
---helper 0 acc = acc
-helper n acc = helper (n-1) (acc + n)
 countDown:: Integer -> String
 countDown 0 = "too low"
-countDown s = show (helper s 0)
---countDown s = show s ++ " " ++ countDown (s-1)
+countDown 1 = show 1
+countDown s = show s ++ " " ++ countDown (s-1)
+--countDown:: Integer -> String
+
 
 {-
 11. Write a function |countUp| that goes the opposite way of |countDown|.
@@ -173,7 +173,8 @@ countDown s = show (helper s 0)
 
 countUp:: Int -> String
 countUp 0 = "too low"
-countUp s = show s ++ " " ++ countUp (s-1) 
+countUp 1 = show 1
+countUp s = countUp (s-1) ++ " " ++ show s  
 
 {-
 12. Write a function |mult| (with type |Int -> Int -> Int|) to multiply two
