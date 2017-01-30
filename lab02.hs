@@ -215,5 +215,17 @@ tconcatMap = "concatMap" ~: TestList [
     --, "tconcatMap3" ~: concatMap1 (++ "!") ["Excited", "happy", "fun", "funny", "LOL"] ~?= ["Excited","!", "happy", "!", "fun", "!", "funny", "!", "LOL", "!"]
     ]
 
+all_tests = TestList [
+    tconcatMap,
+    tconcat,
+    ttranspose,
+    tzip,
+    tmap2,
+    ttall,
+    ttakeWhile,
+    tabc,
+    treverse
+    ]
+
 
     --assert $ pass @=? cases s0 - (errors s0 + failures s0)
