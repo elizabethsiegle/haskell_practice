@@ -1,4 +1,4 @@
-{- CS380 Assignment 1
+{-CS380 Assignment 1
    Name: Lizzie Siegle
    College email: esiegle@brynmawr.edu
    Resources / collaborators:
@@ -8,12 +8,9 @@
 
    (This assignment is directly inspired by an assignment in CIS120 at UPenn.)
 -}
-{-# OPTIONS_GHC -XTypeOperators #-}
 module Intro where
 
 import Test.HUnit
-import Data.Function (on)
-import Data.List --maximumBy
 import Data.Ord
 
 {- NOTE: you should _not_ use functions in the Haskell standard libraries,
@@ -36,8 +33,19 @@ import Data.Ord
    needed (9 dimes, 1 nickel, and 4 pennies). Fill in the body of the
    function 'coins' below so that it returns the right answer. Prefer
    guards over `if`/`then`/`else`. -}
+sumHelp::Int -> Int -> Int -> Int
+sumHelp x y z = x + y + z
 coins :: Int -> Int
-coins x = x
+coins x = 
+  let (d, leftover)    = x `divMod` 10 --divide by 10, pass remainder to be divided by nickels (2nd largest)
+      (n, leftover1)   = leftover `divMod` 5
+      (p, overflowish) = leftover1 `divMod` 1
+  in sumHelp d n p 
+
+-- | cents >= 10 = 1 + coins(cents-10)
+-- | cents >= 5  = 1 + coins(cents-5)
+-- | cents >= 0 = cents
+-- coins cents = (div cents 10) + (div (mod cents 10) 5) + mod cents 5
 
 -- I provide two test cases. You must provide two more.
 -- See https://hackage.haskell.org/package/HUnit-1.5.0.0/docs/Test-HUnit-Base.html
@@ -47,8 +55,8 @@ coins x = x
 coins_tests = "coins" ~:
               TestList [ "coins 7"  ~: coins 7  ~?= 3
                        , "coins 99" ~: coins 99 ~?= 14
-                       , "your test" ~: assertFailure "unwritten test"
-                       , "your test" ~: assertFailure "unwritten test" ]
+                       , "coins 55" ~: coins 55 ~?= 6
+                       , "coins 77" ~: coins 77 ~?= 10 ]
 
 --------------------------------------------------------------------------------
 -- Problem 2 (geometry)
@@ -65,29 +73,24 @@ coins_tests = "coins" ~:
    lengths is <= 0 is undefined. Your function may return any value in this
    case; we will not test this case on submission. -}
 
---maxHelp xs = maximumBy (comparing fst) (zip xs[0..])
-maxHelp :: (Ord a) => [a] -> a
-maxHelp [] = error "max empty list"
-maxHelp [x] = x
-maxHelp (x:xs)
-    | x > max' = x
-    | otherwise = max'
-    where max' = maxHelp xs
+minHelp :: (Ord a) => [a] -> a  --find minimum of list
+minHelp [x] = x
+minHelp (x:xs)
+    | x < minHelp xs = x
+    | otherwise = minHelp xs
 maximumTableArea :: Int -> Int -> Int -> Int
-maximumTableArea side1 side2 side3 
-    | maxHelp [side1, side2, side3] == side1 && max side2 side3 == side2 = side1*side2
-    | maxHelp [side1, side2, side3] == side2 && max side1 side3 == side3 = side2*side3
-    | maxHelp [side1, side2, side3] == side1 && max side2 side3 == side3 = side1*side3
-    | maxHelp [side1, side2, side3] == side2 && max side1 side3 == side1 = side1*side2
-    | maxHelp [side1, side2, side3] == side3 && max side2 side1 == side2 = side2*side3
-    | maxHelp [side1, side2, side3] == side3 && max side2 side1 == side1 = side1*side3
-    | otherwise                                                          = 0
+maximumTableArea side1 side2 side3  --brute force? ish.                  
+    | minHelp [side1, side2, side3] == side1  = side2*side3
+    | minHelp [side1, side2, side3] == side2  = side1*side3
+    | minHelp [side1, side2, side3] == side3  = side1*side2
+    | otherwise                               = 0
+   
 
 maximumTableArea_tests = "maximumTableArea" ~:
-                         TestList [ "mta 1 2 3" ~: maximumTableArea 1 2 3  ~?= 6
-                                  , "mta 4 3 3" ~: maximumTableArea 4 3 3  ~?= 12
-                                  , "mta 9 8 7" ~: maximumTableArea 9 8 7  ~?= 72
-                                  , "your test" ~: maximumTableArea 0 10 9 ~?= 90
+                         TestList [ "mta 1 2 3"  ~: maximumTableArea 1 2 3  ~?= 6
+                                  , "mta 4 3 3"  ~: maximumTableArea 4 3 3  ~?= 12
+                                  , "mta 9 8 7"  ~: maximumTableArea 9 8 7  ~?= 72
+                                  , "mta 0 10 9" ~: maximumTableArea 0 10 9 ~?= 90
                                   ]
 
 --------------------------------------------------------------------------------
@@ -101,10 +104,16 @@ maximumTableArea_tests = "maximumTableArea" ~:
 
 moveRobot :: Int -> String -> Int -> Int --track, dir, num_moves
 moveRobot cur_pos dir num_moves
-  | dir == "forward" && (cur_pos + num_moves <= 99)     = cur_pos + num_moves
-  | dir == "backward" && (cur_pos - num_moves >= 0)     = cur_pos - num_moves 
-  | cur_pos + num_moves < 0                             = 0
-  | cur_pos + num_moves > 99                            = 99
+  
+  -- dir forward and check if moving forward num_moves is <= 99 spot
+  | dir == "forward" && (cur_pos + num_moves <= 99)      = cur_pos + num_moves
+  
+  -- dir backward and check if moving backward num_moves is >= 0 spot
+  | dir == "backward" && (cur_pos - num_moves >= 0)      = cur_pos - num_moves 
+
+  -- if adding num_moves to cur_pos is out of range, set min or max pos
+  | cur_pos - num_moves < 0  || cur_pos + num_moves < 0  = 0
+  | cur_pos + num_moves < 99 || cur_pos + num_moves > 99 = 99
 
 moveRobot_tests = "moveRobot" ~:
                   TestList [ "10 forward 3" ~: moveRobot 10 "forward" 3 ~?= 13
@@ -147,17 +156,16 @@ moveRobot_tests = "moveRobot" ~:
        analysis... -}
 
 streetDirection :: Int -> String
-twowayLst       = [14, 25, 38, 41, 42]
-specialSouthLst = [24, 59]
-southLst = [2, 4..12] ++ [15, 17..31] ++ [32, 34..44]
-northLst = [1, 3..13] ++ [16, 18..30] ++ [33, 35..45]
-main = print(northLst)
+twowayLst       = [14, 25, 38, 41, 42] --list of 2-way streets
+specialSouthLst = [24, 59] --list of streets that go south, breaking pattern
+southLst = [2, 4..12] ++ [15, 17..31] ++ [32, 34..44] --south streets
+northLst = [1, 3..13] ++ [16, 18..30] ++ [33, 35..45] --north streets
+--check which list street belongs to
 streetDirection num
-    | num `elem` specialSouthLst          = "S"
-    | num `elem` twowayLst                = "NS"
-    | num == 58 || num `elem` northLst    = "N"
-    | num `elem` southLst                 = "S"
-    | otherwise                           = "N/A"
+    | num `elem` specialSouthLst || num `elem` southLst = "S"
+    | num `elem` twowayLst                              = "NS"
+    | num == 58 || num `elem` northLst                  = "N"
+    | otherwise                                         = "N/A"
 
 streetDirection_tests = "streetDirection" ~:
                         TestList [ "14" ~: streetDirection 14 ~?= "NS"
@@ -174,10 +182,11 @@ streetDirection_tests = "streetDirection" ~:
    in its input list is true. -}
 
 exists :: [Bool] -> Bool
+--check if True is element of list
 exists b 
-    | (True `elem` b) == True   = True
-    | length b == 0             = False
+    | (True `elem` b) == True   = True --don't need == True
     | otherwise                 = False
+-- afoldl (||) False
 
 exists_tests = "exists" ~:
                TestList [ "FF"  ~: exists [False, False]       ~?= False
@@ -192,8 +201,11 @@ exists_tests = "exists" ~:
    into a single string. This function also takes an additional
    argument, a separator string, which is interspersed between all of
    the strings in the list. -}
-join :: String -> [String] -> String
-join xs ys = drop (length xs) $ concat $ map (\w -> xs ++ w) ys
+join :: String -> [String] -> String --can ++ strings
+join xs ys = 
+  drop (length xs) --w/o this, String returned w/ separator string at front
+  $ concat 
+  $ map (\y -> xs ++ y) ys --anonymous func adding ys to xs for each element in ys
 
 join_tests = "join" ~:
              TestList [ ", abc" ~: join "," ["a", "b", "c"] ~?= "a,b,c"
@@ -211,8 +223,8 @@ join_tests = "join" ~:
 
 containsStr :: [String] -> String -> Bool
 containsStr lstToys toy 
-    | (toy `elem` lstToys) == True  = True
-    | otherwise                   = False
+    | (toy `elem` lstToys) == True = True
+    | otherwise                    = False
 
 containsStr_tests
   = "containsStr" ~:
@@ -234,7 +246,11 @@ containsStr_tests
 dollsOf :: [String]  -- all toys
         -> [String]  -- dolls
         -> [String]  -- the toys that are dolls
-dollsOf = error "dollsOf: unimplemented"
+--dollsOf t d = filter (a (`elem` s)) s where
+
+-- return list of elements where element is a toy and is a doll
+dollsOf t d = [x | x <- t, containsStr d x]
+
 
 dollsOf_tests
   = "dollsOf" ~:
@@ -243,8 +259,10 @@ dollsOf_tests
                  ~?= ["barbie"]
              , "none" ~:
                dollsOf [] ["barbie", "woody"] ~?= []
-             , "your test" ~: assertFailure "unwritten test"
-             , "your test" ~: assertFailure "unwritten test" ]
+             , "mulan, tiana, merida, belle" ~: 
+             dollsOf["mulan", "merida", "optimus prime", "tiana", "bb8","yoda", "belle"] ["mulan", "merida", "tiana", "belle"] ~?=["mulan", "merida", "tiana", "belle"]
+             , "none2" ~: dollsOf["telescope", "trampoline"] [] ~?= [] 
+             ]
 
 --------------------------------------------------------------------------------
 -- Problem 8 (merging lists)
@@ -283,7 +301,7 @@ merge_tests = "merge" ~:
 isSorted :: [Int] -> Bool
 isSorted [] = True
 isSorted (x:[]) = True
-isSorted (x:y:xs) = x <= y && isSorted(y:xs)
+isSorted (x:y:xs) = x <= y && isSorted(y:xs) --x must be less than or equal to following elements
     
 
 isSorted_tests = "isSorted" ~:
@@ -334,19 +352,17 @@ mergeSorted_tests
 
 {- Write a function that takes a list of integers and returns a list containing
    only the even numbers from the input list. -}
-
+--1 way: pattern matching
 evensOnly :: [Int] -> [Int]
-evensOnly [] = []
-evensOnly (x:xs) 
-    | even x  = x : evensOnly xs --if first in lst = even, frst: rec. call on rest
-    | otherwise = evensOnly xs --else if first !even, rec. call on rest
---evensOnly ex = filterEvens ex
---  where  
---    filterEvens []  
---      = []
---    filterEvens (x : ex)
---     | even x    = x : filterEvens ex
---     | otherwise = filterEvens ex
+evensOnly x = [y | y <- x, y `mod` 2 == 0]
+--filter even x
+-- == filter even 
+--2nd way: helper function
+--evenHelper::Int -> Bool
+--evenHelper n = n `mod` 2 == 0
+--evensOnly x = filter (evenHelper) x 
+
+
 
 evensOnly_tests = "evensOnly" ~:
                   TestList [ "12345" ~: evensOnly [1,2,3,4,5] ~?= [2,4]
@@ -360,10 +376,14 @@ evensOnly_tests = "evensOnly" ~:
 
 {- Write a function that takes a list of integers and returns a list containing
    the squares of the numbers in the input list. -}
-
+-- 1 way: helper function, map square function onto list
+squareHelper:: Int -> Int
+squareHelper y = y*y
 squares :: [Int] -> [Int]
-squares []      = []
-squares x = [a*a | a <-x]
+squares x = map squareHelper x
+--squares = map (^2) --curry infix operator
+--2nd way: pattern matching
+--squares x = [a*a | a <-x]
 
 squares_tests = "squares" ~:
                 TestList [ "123"  ~: squares [1,2,3]    ~?= [1,4,9]
@@ -378,9 +398,10 @@ squares_tests = "squares" ~:
    the squares of the negative integers in the input list, as long as that square's
    last digit is a 6. -}
 
+--pattern match: return squared value if value is in list, and it's negative, and it ends in 6
 wurble :: [Int] -> [Int]
 wurble [] = []
-wurble x = [a*a | a <- x, (mod (abs(a*a)) 10 == 6), (a < 0)]
+wurble x = [a*a | a <- x, (mod (a*a) 10 == 6), (a < 0)]
 
 wurble_tests = "wurble" ~:
                TestList [ "negs" ~: wurble [-1,-2,-3,-4,-5] ~?= [16]
@@ -396,15 +417,12 @@ wurble_tests = "wurble" ~:
    the other, simply ignore the extra elements. -}
 
 sums :: [Int] -> [Int] -> [Int]
-sums [] [] = []
-sums a [] = a
-sums [] b = b
 sums a b = zipWith (+) a b
 
 sums_tests = "sums" ~:
              TestList [ "123,456" ~: sums [1,2,3] [4,5,6] ~?= [5,7,9]
                       , "1234,00" ~: sums [1,2,3,4] [0,0] ~?= [1,2]
-                      , "[], 987" ~: sums [] [98, 7] ~?= [98, 7]
+                      , "[], 987" ~: sums [] [98, 7] ~?= []
                       , "1000, 5544332211" ~: sums [10, 0, 0] [55, 44, 33, 22, 11] ~?= [65, 44, 33]]
 
 --------------------------------------------------------------------------------
@@ -446,11 +464,6 @@ sums_tests = "sums" ~:
 
 permutations :: [a] -> [[a]]
 permutations = error "ugh perm"
---permutations xs =
---  [ y : zs
---  | (y, ys)] <- selections xs
---  , zs <- permutations ys
---  ]
 
 {- Note that you will also have to think about how to TEST
    permutations, as there may be several correct solutions for each
@@ -459,8 +472,9 @@ permutations = error "ugh perm"
 
 permutations_tests
   = "permutations" ~:
-    TestList [ "your test" ~: assertFailure "unwritten test"
-             , "your test" ~: assertFailure "unwritten test" ]
+    TestList [ "perm1" ~: permutations [5, 4, 3] ~?= [[5, 4, 3], [5, 3, 4], [4, 3, 5], [4, 5, 3], [3, 4, 5], [3, 5, 4]]
+             , "perm2" ~: permutations [1, 2, 3, 4] ~?= [[1, 2, 3, 4], [1, 3, 2, 4], [1, 2, 4, 3], [1, 4, 3, 2], [1, 3, 4, 2], [1, 4, 2, 3], [2, 1, 3, 4], [2, 3, 1, 4], [2, 1, 4, 3], [2, 3, 4, 1], [2, 1, 4, 3], [2, 1, 3, 4], [3, 2, 1, 4], [3, 2, 4, 1], [3, 4, 1, 2], [3, 4, 1, 2]]
+             ]
 
 --------------------------------------------------------------------------------
 -- All the tests, for a quick overview.
@@ -482,3 +496,23 @@ all_tests = TestList [ coins_tests
                      , wurble_tests
                      , sums_tests
                      , permutations_tests ]
+--------------------------------------------------------------------------------
+{- Now that you've finished the assignment, please answer the following
+   questions:
+
+1. It went alright. I got frustrated easily because it took a while to get used to the errors and how to express what I was thinking, especially with loops.
+It really helped to write it out. I liked how there were multiple ways to do something (ie pattern matching and helper functions)
+
+2. What questions do you have?
+None at the moment, it just takes a while to get used to I guess this paradigm. 
+
+3. How long did this assignment take?
+Too long, but I tried different ways of expressing something after I had already finished that problem, 
+tried different error messages, and did problems multiple times testing different ways to see 
+which would work, which did not work, why, and also tried to optimize some. (like for the maxTableArea,
+I initially made a maxHelper function and checked the maximum of a lot, but realized minimum was more efficient
+because if I knew the minimum, I knew the other two were the sides to use, whereas with the maximum, I had to call
+maximum twice!!)  Overall, I'd say I spent maybe 12 hours, but it wasn't all productive time (lots of checking Twitter 
+for political happenings, etc). Also spent a lot of time on test cases, getting used to GradeScrope, trying to get feedback...
+
+-} 
