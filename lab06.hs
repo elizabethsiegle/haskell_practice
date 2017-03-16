@@ -5,7 +5,7 @@
 module Lab06 where   -- rename as you please
 
 import Data.Kind ( Type ) 
-import Prelude hiding (last, map, and, or, any, take, drop)
+import Prelude hiding (last, map, and, or, any, take, drop, length, init)
 
 data Nat where
   Zero :: Nat
@@ -35,51 +35,81 @@ data SBool :: Bool -> Type where
 
 {-Consulting the documentation on lists, come up with types and implementations for the translation of the following functions to work on Vecs. There should be no lists in your code.
 -}
---1. last
-last::Vec (Succ n) a -> a
-last (x:>Nil) = x
-last (x :> y:>ys) = last (y:>ys) --prove ys isn't empty
---last (_:> xs@(_:>_)) = last xs
-
---2. map
-map:: (a->b) -> Vec n a -> Vec n b
-map f Nil     = Nil
-map f (x:>xs) = f x :> map f xs 
-
---3. and
+--1. and
 and :: Vec n Bool -> Bool
 and Nil    = True
 and (x :> b) = and b
 --and _      = False  
 
---4. or
+--2. or
 or :: Vec n Bool -> Bool
 or Nil      = True
 or (x :> b) = or b
 --or _        = True
 
--- 5. any
+-- 3. any
 any :: (a-> Bool) -> Vec n a -> Bool
 any f Nil   = False
 any f (x:> b) = case f x of
   True -> True
   False -> any f b
 
--- 6. take
-take :: Int -> Vec n a -> Vec n b
-take 0 _                =  Nil
-take _ Nil              =  Nil
-take i (x:>xs)          =  x :> take (i-1) xs
---take i Nil = Nil
---take Nil i = Nil
---take i (x:> xs) =
---  | i == 0    = Nil
---  | otherwise = 
+--4. map
+map:: (a->b) -> Vec n a -> Vec n b
+map f Nil     = Nil
+map f (x:>xs) = f x :> map f xs 
 
--- 7. drop
---drop :: Int -> Vec n a -> Vec n b 
+--5. last
+last::Vec (Succ n) a -> a
+last (x:>Nil) = x
+last (x :> y:>ys) = last (y:>ys) --prove ys isn't empty
+--last (_:> xs@(_:>_)) = last xs
 
---init
---uncons
---null (this can return an SBool)
---length (this can return an SNat)
+-- 6. unzip
+unzip    :: [(a,b)] -> ([a],[b])
+--transforms a list of pairs into a list of first components and a list of second components.
+{-# INLINE unzip #-}
+unzip    =  foldr (\(a,b) ~(as,bs) -> (a:as,b:bs)) ([],[])
+
+--7. uncons
+--uncons:: (x:>xs) -> Maybe (a, (x:>xs))
+
+-- 8. init
+init:: (Vec n b) -> (Vec n b)
+init (y:>ys)  =  (y:>ys)
+init (y:>ys)  =  y :> init ys
+init Nil      =  error "init"
+
+--9. insert
+--10 sort (insertion)
+
+-- 11. null (this can return an SBool)
+null:: (Vec n b) -> SBool Bool
+null Nil      =  STrue True
+null (_:>_)    =  SFalse False
+
+--12. length (this can return an SNat)
+length:: (Vec n b) -> Int
+length l                =  len l 0
+  where
+    len :: (a:>as) -> Int -> Int
+    len []     a  = I a
+    len (_:xs) a  = len xs (a + 1)
+
+-- 13. stripPrefix
+
+-- 14. take
+take :: SNat s -> (Vec n a) -> (Vec n a)
+take i Nil               = Nil
+take 0 (x:>xs)           = (x:xs)
+take i (y:>ys)           =  y :> take SNat(Succ i) ys
+
+-- 15. drop
+drop :: SNat s -> Vec n a -> Vec n a
+drop 0 xs           = xs
+drop _ Nil          = Nil
+drop i (x:> xs)     = x : take SNat(Succ i) xs
+
+-- 16. replicate
+replicate :: SNat s -> a -> Vec l a
+replicate n x    =  Vec (take n (repeat x))
